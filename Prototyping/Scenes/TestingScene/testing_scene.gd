@@ -13,6 +13,8 @@ enum HEROS { WARRIOR, LUMBERJACK, ARCHER, MINER }
 
 @onready var tilemap_ground: TileMapLayer = $TMGrass
 @onready var tilemap_trees: TileMapLayer = $TMTrees
+@onready var tilemap_enemies: TileMapLayer = $TMEnemy
+
 @onready var tilemap_highlight: TileMapLayer = $TMHighlight
 var tilemap_highlight_atlas: int
 var current_hover_position := Vector2i(-100, -100)
@@ -20,7 +22,7 @@ var current_hover_position := Vector2i(-100, -100)
 var full_path_queue = []
 var full_path_queue_chars = []
 var run_mode_active: bool = false
-@onready var char_warrior = $Warrior
+var upcoming_cleared_cells = {}
 
 var drawn_path := []
 var drawing_path_active: bool = false
@@ -156,8 +158,17 @@ func hero_can_enter(cell: Vector2i) -> bool:
 	if is_specified_tilemap(tilemap_ground, cell):
 		return true
 	
+	if upcoming_cleared_cells.has(cell):
+		return true
+	
+	if upcoming_cleared_cells.has(cell):
+		return true
+	
+	if is_specified_tilemap(tilemap_enemies, cell):
+		return current_hero_path == HEROS.WARRIOR
+	
 	if is_specified_tilemap(tilemap_trees, cell):
-		return (current_hero_path == HEROS.LUMBERJACK)
+		return current_hero_path == HEROS.LUMBERJACK
 	
 	return false
 
@@ -167,6 +178,16 @@ func on_confirm_path_pressed() -> void:
 	confirm_path_button.visible = false
 	full_path_queue.append(drawn_path)
 	full_path_queue_chars.append(current_hero_path)
+	
+	# Remember obstacles scheduled to be cleared
+	if current_hero_path == HEROS.WARRIOR:
+		for cell in drawn_path:
+			if is_specified_tilemap(tilemap_enemies, cell):
+				upcoming_cleared_cells[cell] = true
+	if current_hero_path == HEROS.LUMBERJACK:
+		for cell in drawn_path:
+			if is_specified_tilemap(tilemap_trees, cell):
+				upcoming_cleared_cells[cell] = true
 	
 	var qi = queue_item_scene.instantiate()
 	$"../Interface/UI/QueuePanel/ScrollContainer/Queue".add_child(qi)
@@ -204,6 +225,9 @@ func run_simulation() -> void:
 			var pos = tilemap_ground.map_to_local(next_position)
 			await tween.tween_property(heroref, "position", pos, 0.1).finished
 			
+			if is_specified_tilemap(tilemap_enemies, next_position):
+				if hero == HEROS.WARRIOR:
+					await destroy_obstacle(tilemap_enemies, next_position)
 			if is_specified_tilemap(tilemap_trees, next_position):
 				if hero == HEROS.LUMBERJACK:
 					await destroy_obstacle(tilemap_trees, next_position)
