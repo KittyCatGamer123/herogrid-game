@@ -5,10 +5,10 @@
 [sub_resource type="LabelSettings" id="LabelSettings_btmwo"]
 font_size = 23
 
-[node name="Queue" type="Control" unique_id=919784141]
+[node name="Queue" type="Button" unique_id=1621885416]
 custom_minimum_size = Vector2(220, 60)
-layout_mode = 3
-anchors_preset = 0
+offset_right = 220.0
+offset_bottom = 60.0
 script = ExtResource("1_2m8ww")
 
 [node name="ColorIcon" type="ColorRect" parent="." unique_id=339907658]
@@ -43,3 +43,6 @@ offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "15 Steps"
+
+[connection signal="mouse_entered" from="." to="." method="mouse_enter"]
+[connection signal="mouse_exited" from="." to="." method="mouse_exit"]

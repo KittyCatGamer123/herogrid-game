@@ -4,8 +4,8 @@ class_name GameTest
 enum HEROS { WARRIOR, LUMBERJACK, ARCHER, MINER }
 var HeroRules = {
 	HEROS.WARRIOR: { "color": Color("6babff"), "name": "Warrior" },
-	HEROS.LUMBERJACK: { "color": Color("ff6b8e"),  "name": "Lumberjack" },
-	HEROS.ARCHER: { "color": Color("75ff6b"),  "name": "Archer" },
+	HEROS.LUMBERJACK: { "color": Color("ff6b8e"), "name": "Lumberjack" },
+	HEROS.ARCHER: { "color": Color("75ff6b"), "name": "Archer" },
 	HEROS.MINER: { "color": Color("ffba6b"), "name": "Miner" },
 }
 
@@ -17,15 +17,18 @@ var tilemap_highlight_atlas: int
 var current_hover_position := Vector2i(-100, -100)
 
 var full_path_queue = []
+var run_mode_active: bool = false
+@onready var char_warrior = $Warrior
 
 var drawn_path := []
 var drawing_path_active: bool = false
 @onready var confirm_path_button: Button = $"../Interface/UI/ConfirmPath"
+@onready var start_path_button: Button = $"../Interface/UI/Start"
 
 func _ready() -> void:
 	tilemap_highlight_atlas = tilemap_highlight.tile_set.get_source_id(0)
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if Input.is_action_pressed("ui_right"):
 		gamecamera.position.x += 10
 	if Input.is_action_pressed("ui_left"):
@@ -44,18 +47,20 @@ func _input(event: InputEvent) -> void:
 			current_hover_position = cell
 			update_hover_position()
 		
-		if drawing_path_active:
+		if drawing_path_active and (not run_mode_active):
 			add_cell_to_path(current_hover_position)
 	
 	if event is InputEventMouseButton:
 		# Awful bad stupid code
-		if confirm_path_button.get_global_rect().has_point(event.position):
+		if control_node_clicked(confirm_path_button, event):
+			return
+		if control_node_clicked(start_path_button, event):
 			return
 		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			drawing_path_active = event.pressed
 			
-			if drawing_path_active:
+			if drawing_path_active and (not run_mode_active):
 				drawn_path.clear()
 				add_cell_to_path(current_hover_position)
 				confirm_path_button.visible = false
@@ -120,6 +125,30 @@ func on_confirm_path_pressed() -> void:
 	
 	var qi = queue_item_scene.instantiate()
 	$"../Interface/UI/QueuePanel/ScrollContainer/Queue".add_child(qi)
+	qi.path = drawn_path
 	qi.init(self, HEROS.WARRIOR, len(drawn_path))
 	
 	drawn_path = []
+
+func control_node_clicked(node, event) -> bool:
+	return node.get_global_rect().has_point(event.position)
+
+func start_pressed() -> void:
+	if len(full_path_queue) < 1:
+		return
+	
+	run_mode_active = true
+	start_path_button.disabled = true
+	drawn_path = []
+	confirm_path_button.visible = false
+	run_simulation()
+
+func run_simulation() -> void:
+	char_warrior.position = full_path_queue[0][0]
+	for path in full_path_queue:
+		for next_position in path: 
+			var tween = create_tween()
+			var pos = tilemap_ground.map_to_local(next_position)
+			await tween.tween_property(char_warrior, "position", pos, 0.3).finished
+			await get_tree().create_timer(0.2).timeout
+		await get_tree().create_timer(0.65).timeout

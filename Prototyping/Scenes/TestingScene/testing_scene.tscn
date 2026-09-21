@@ -46,6 +46,14 @@ limit_top = 0
 limit_right = 2432
 limit_bottom = 2042
 
+[node name="Warrior" type="StaticBody2D" parent="TestingScene" unique_id=83234159]
+position = Vector2(105, 1908)
+metadata/_edit_group_ = true
+
+[node name="Polygon2D" type="Polygon2D" parent="TestingScene/Warrior" unique_id=557988349]
+color = Color(0.41960785, 0.67058825, 1, 1)
+polygon = PackedVector2Array(-40, -100, 40, -100, 40, 25, -40, 25)
+
 [node name="Interface" type="CanvasLayer" parent="." unique_id=2128380039]
 
 [node name="UI" type="Control" parent="Interface" unique_id=1973134322]
@@ -117,4 +125,5 @@ offset_right = 1079.0
 offset_bottom = 769.0
 text = "CREATE PATH"
 
+[connection signal="pressed" from="Interface/UI/Start" to="TestingScene" method="start_pressed"]
 [connection signal="pressed" from="Interface/UI/ConfirmPath" to="TestingScene" method="on_confirm_path_pressed"]
